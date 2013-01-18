@@ -512,6 +512,7 @@ enum GCDAsyncSocketConfig
 	BOOL bufferOwner;
 	NSUInteger originalBufferLength;
 	long tag;
+	gcdAsyncSocketCallback_t callback;
 }
 - (id)initWithData:(NSMutableData *)d
        startOffset:(NSUInteger)s
@@ -519,7 +520,8 @@ enum GCDAsyncSocketConfig
            timeout:(NSTimeInterval)t
         readLength:(NSUInteger)l
         terminator:(NSData *)e
-               tag:(long)i;
+               tag:(long)i
+		  callback:(gcdAsyncSocketCallback_t)c;
 
 - (void)ensureCapacityForAdditionalDataOfLength:(NSUInteger)bytesToRead;
 
@@ -542,6 +544,7 @@ enum GCDAsyncSocketConfig
         readLength:(NSUInteger)l
         terminator:(NSData *)e
                tag:(long)i
+		  callback:(gcdAsyncSocketCallback_t)c
 {
 	if((self = [super init]))
 	{
@@ -551,6 +554,7 @@ enum GCDAsyncSocketConfig
 		readLength = l;
 		term = [e copy];
 		tag = i;
+		callback = c;
 		
 		if (d)
 		{
@@ -971,14 +975,15 @@ enum GCDAsyncSocketConfig
 	NSData *buffer;
 	NSUInteger bytesDone;
 	long tag;
+	gcdAsyncSocketCallback_t callback;
 	NSTimeInterval timeout;
 }
-- (id)initWithData:(NSData *)d timeout:(NSTimeInterval)t tag:(long)i;
+- (id)initWithData:(NSData *)d timeout:(NSTimeInterval)t tag:(long)i callback:(gcdAsyncSocketCallback_t)c;
 @end
 
 @implementation GCDAsyncWritePacket
 
-- (id)initWithData:(NSData *)d timeout:(NSTimeInterval)t tag:(long)i
+- (id)initWithData:(NSData *)d timeout:(NSTimeInterval)t tag:(long)i callback:(gcdAsyncSocketCallback_t)c
 {
 	if((self = [super init]))
 	{
@@ -986,6 +991,7 @@ enum GCDAsyncSocketConfig
 		bytesDone = 0;
 		timeout = t;
 		tag = i;
+		callback = c;
 	}
 	return self;
 }
@@ -3796,17 +3802,18 @@ enum GCDAsyncSocketConfig
 #pragma mark Reading
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)readDataWithTimeout:(NSTimeInterval)timeout tag:(long)tag
+- (void)readDataWithTimeout:(NSTimeInterval)timeout tag:(long)tag callback:(gcdAsyncSocketCallback_t)callback
 {
-	[self readDataWithTimeout:timeout buffer:nil bufferOffset:0 maxLength:0 tag:tag];
+	[self readDataWithTimeout:timeout buffer:nil bufferOffset:0 maxLength:0 tag:tag callback:callback];
 }
 
 - (void)readDataWithTimeout:(NSTimeInterval)timeout
                      buffer:(NSMutableData *)buffer
                bufferOffset:(NSUInteger)offset
                         tag:(long)tag
+				   callback:(gcdAsyncSocketCallback_t)callback
 {
-	[self readDataWithTimeout:timeout buffer:buffer bufferOffset:offset maxLength:0 tag:tag];
+	[self readDataWithTimeout:timeout buffer:buffer bufferOffset:offset maxLength:0 tag:tag callback:callback];
 }
 
 - (void)readDataWithTimeout:(NSTimeInterval)timeout
@@ -3814,6 +3821,7 @@ enum GCDAsyncSocketConfig
                bufferOffset:(NSUInteger)offset
                   maxLength:(NSUInteger)length
                         tag:(long)tag
+				   callback:(gcdAsyncSocketCallback_t)callback
 {
 	if (offset > [buffer length]) {
 		LogWarn(@"Cannot read: offset > [buffer length]");
@@ -3826,7 +3834,8 @@ enum GCDAsyncSocketConfig
 	                                                              timeout:timeout
 	                                                           readLength:0
 	                                                           terminator:nil
-	                                                                  tag:tag];
+	                                                                  tag:tag
+																 callback:callback];
 	
 	dispatch_async(socketQueue, ^{ @autoreleasepool {
 		
@@ -3843,9 +3852,9 @@ enum GCDAsyncSocketConfig
 	// as the queue might get released without the block completing.
 }
 
-- (void)readDataToLength:(NSUInteger)length withTimeout:(NSTimeInterval)timeout tag:(long)tag
+- (void)readDataToLength:(NSUInteger)length withTimeout:(NSTimeInterval)timeout tag:(long)tag callback:(gcdAsyncSocketCallback_t)callback
 {
-	[self readDataToLength:length withTimeout:timeout buffer:nil bufferOffset:0 tag:tag];
+	[self readDataToLength:length withTimeout:timeout buffer:nil bufferOffset:0 tag:tag callback:callback];
 }
 
 - (void)readDataToLength:(NSUInteger)length
@@ -3853,6 +3862,7 @@ enum GCDAsyncSocketConfig
                   buffer:(NSMutableData *)buffer
             bufferOffset:(NSUInteger)offset
                      tag:(long)tag
+				callback:(gcdAsyncSocketCallback_t)callback
 {
 	if (length == 0) {
 		LogWarn(@"Cannot read: length == 0");
@@ -3869,7 +3879,8 @@ enum GCDAsyncSocketConfig
 	                                                              timeout:timeout
 	                                                           readLength:length
 	                                                           terminator:nil
-	                                                                  tag:tag];
+	                                                                  tag:tag
+																 callback:callback];
 	
 	dispatch_async(socketQueue, ^{ @autoreleasepool {
 		
@@ -3886,9 +3897,9 @@ enum GCDAsyncSocketConfig
 	// as the queue might get released without the block completing.
 }
 
-- (void)readDataToData:(NSData *)data withTimeout:(NSTimeInterval)timeout tag:(long)tag
+- (void)readDataToData:(NSData *)data withTimeout:(NSTimeInterval)timeout tag:(long)tag callback:(gcdAsyncSocketCallback_t)callback
 {
-	[self readDataToData:data withTimeout:timeout buffer:nil bufferOffset:0 maxLength:0 tag:tag];
+	[self readDataToData:data withTimeout:timeout buffer:nil bufferOffset:0 maxLength:0 tag:tag callback:callback];
 }
 
 - (void)readDataToData:(NSData *)data
@@ -3896,13 +3907,14 @@ enum GCDAsyncSocketConfig
                 buffer:(NSMutableData *)buffer
           bufferOffset:(NSUInteger)offset
                    tag:(long)tag
+			  callback:(gcdAsyncSocketCallback_t)callback
 {
-	[self readDataToData:data withTimeout:timeout buffer:buffer bufferOffset:offset maxLength:0 tag:tag];
+	[self readDataToData:data withTimeout:timeout buffer:buffer bufferOffset:offset maxLength:0 tag:tag callback:callback];
 }
 
-- (void)readDataToData:(NSData *)data withTimeout:(NSTimeInterval)timeout maxLength:(NSUInteger)length tag:(long)tag
+- (void)readDataToData:(NSData *)data withTimeout:(NSTimeInterval)timeout maxLength:(NSUInteger)length tag:(long)tag callback:(gcdAsyncSocketCallback_t)callback
 {
-	[self readDataToData:data withTimeout:timeout buffer:nil bufferOffset:0 maxLength:length tag:tag];
+	[self readDataToData:data withTimeout:timeout buffer:nil bufferOffset:0 maxLength:length tag:tag callback:callback];
 }
 
 - (void)readDataToData:(NSData *)data
@@ -3911,6 +3923,7 @@ enum GCDAsyncSocketConfig
           bufferOffset:(NSUInteger)offset
              maxLength:(NSUInteger)maxLength
                    tag:(long)tag
+			  callback:(gcdAsyncSocketCallback_t)callback
 {
 	if ([data length] == 0) {
 		LogWarn(@"Cannot read: [data length] == 0");
@@ -3931,7 +3944,8 @@ enum GCDAsyncSocketConfig
 	                                                              timeout:timeout
 	                                                           readLength:0
 	                                                           terminator:data
-	                                                                  tag:tag];
+	                                                                  tag:tag
+																 callback:callback];
 	
 	dispatch_async(socketQueue, ^{ @autoreleasepool {
 		
@@ -5074,6 +5088,8 @@ enum GCDAsyncSocketConfig
 		GCDAsyncReadPacket *theRead = currentRead; // Ensure currentRead retained since result may not own buffer
 		
 		dispatch_async(delegateQueue, ^{ @autoreleasepool {
+			if(theRead->callback)
+				theRead->callback(result);
 			
 			[theDelegate socket:self didReadData:result withTag:theRead->tag];
 		}});
@@ -5182,11 +5198,11 @@ enum GCDAsyncSocketConfig
 #pragma mark Writing
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)writeData:(NSData *)data withTimeout:(NSTimeInterval)timeout tag:(long)tag
+- (void)writeData:(NSData *)data withTimeout:(NSTimeInterval)timeout tag:(long)tag callback:(gcdAsyncSocketCallback_t)callback
 {
 	if ([data length] == 0) return;
 	
-	GCDAsyncWritePacket *packet = [[GCDAsyncWritePacket alloc] initWithData:data timeout:timeout tag:tag];
+	GCDAsyncWritePacket *packet = [[GCDAsyncWritePacket alloc] initWithData:data timeout:timeout tag:tag callback:callback];
 	
 	dispatch_async(socketQueue, ^{ @autoreleasepool {
 		
@@ -5702,9 +5718,11 @@ enum GCDAsyncSocketConfig
 	{
 		__strong id theDelegate = delegate;
 		long theWriteTag = currentWrite->tag;
+		__strong gcdAsyncSocketCallback_t callback = currentWrite->callback;
 		
 		dispatch_async(delegateQueue, ^{ @autoreleasepool {
-			
+			if(callback)
+				callback(nil);
 			[theDelegate socket:self didWriteDataWithTag:theWriteTag];
 		}});
 	}

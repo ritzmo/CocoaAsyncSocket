@@ -59,6 +59,8 @@
 
 #endif
 
+typedef void (^gcdAsyncSocketCallback_t)(NSData *);
+
 extern NSString *const GCDAsyncSocketException;
 extern NSString *const GCDAsyncSocketErrorDomain;
 
@@ -412,7 +414,7 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
  * 
  * If the timeout value is negative, the read operation will not use a timeout.
 **/
-- (void)readDataWithTimeout:(NSTimeInterval)timeout tag:(long)tag;
+- (void)readDataWithTimeout:(NSTimeInterval)timeout tag:(long)tag callback:(gcdAsyncSocketCallback_t)callback;
 
 /**
  * Reads the first available bytes that become available on the socket.
@@ -433,7 +435,8 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
 - (void)readDataWithTimeout:(NSTimeInterval)timeout
 					 buffer:(NSMutableData *)buffer
 			   bufferOffset:(NSUInteger)offset
-						tag:(long)tag;
+						tag:(long)tag
+				   callback:(gcdAsyncSocketCallback_t)callback;
 
 /**
  * Reads the first available bytes that become available on the socket.
@@ -457,7 +460,8 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
                      buffer:(NSMutableData *)buffer
                bufferOffset:(NSUInteger)offset
                   maxLength:(NSUInteger)length
-                        tag:(long)tag;
+                        tag:(long)tag
+				   callback:(gcdAsyncSocketCallback_t)callback;
 
 /**
  * Reads the given number of bytes.
@@ -466,7 +470,7 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
  * 
  * If the length is 0, this method does nothing and the delegate is not called.
 **/
-- (void)readDataToLength:(NSUInteger)length withTimeout:(NSTimeInterval)timeout tag:(long)tag;
+- (void)readDataToLength:(NSUInteger)length withTimeout:(NSTimeInterval)timeout tag:(long)tag callback:(gcdAsyncSocketCallback_t)callback;
 
 /**
  * Reads the given number of bytes.
@@ -489,7 +493,8 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
              withTimeout:(NSTimeInterval)timeout
                   buffer:(NSMutableData *)buffer
             bufferOffset:(NSUInteger)offset
-                     tag:(long)tag;
+                     tag:(long)tag
+				callback:(gcdAsyncSocketCallback_t)callback;
 
 /**
  * Reads bytes until (and including) the passed "data" parameter, which acts as a separator.
@@ -512,7 +517,7 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
  * For performance reasons, the socket will retain it, not copy it.
  * So if it is immutable, don't modify it while the socket is using it.
 **/
-- (void)readDataToData:(NSData *)data withTimeout:(NSTimeInterval)timeout tag:(long)tag;
+- (void)readDataToData:(NSData *)data withTimeout:(NSTimeInterval)timeout tag:(long)tag callback:(gcdAsyncSocketCallback_t)callback;
 
 /**
  * Reads bytes until (and including) the passed "data" parameter, which acts as a separator.
@@ -547,7 +552,8 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
            withTimeout:(NSTimeInterval)timeout
                 buffer:(NSMutableData *)buffer
           bufferOffset:(NSUInteger)offset
-                   tag:(long)tag;
+                   tag:(long)tag
+			  callback:(gcdAsyncSocketCallback_t)callback;
 
 /**
  * Reads bytes until (and including) the passed "data" parameter, which acts as a separator.
@@ -577,7 +583,7 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
  * For performance reasons, the socket will retain it, not copy it.
  * So if it is immutable, don't modify it while the socket is using it.
 **/
-- (void)readDataToData:(NSData *)data withTimeout:(NSTimeInterval)timeout maxLength:(NSUInteger)length tag:(long)tag;
+- (void)readDataToData:(NSData *)data withTimeout:(NSTimeInterval)timeout maxLength:(NSUInteger)length tag:(long)tag callback:(gcdAsyncSocketCallback_t)callback;
 
 /**
  * Reads bytes until (and including) the passed "data" parameter, which acts as a separator.
@@ -620,7 +626,8 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
                 buffer:(NSMutableData *)buffer
           bufferOffset:(NSUInteger)offset
              maxLength:(NSUInteger)length
-                   tag:(long)tag;
+                   tag:(long)tag
+			  callback:(gcdAsyncSocketCallback_t)callback;
 
 /**
  * Returns progress of the current read, from 0.0 to 1.0, or NaN if no current read (use isnan() to check).
@@ -647,7 +654,7 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
  * completes writing the bytes (which is NOT immediately after this method returns, but rather at a later time
  * when the delegate method notifies you), then you should first copy the bytes, and pass the copy to this method.
 **/
-- (void)writeData:(NSData *)data withTimeout:(NSTimeInterval)timeout tag:(long)tag;
+- (void)writeData:(NSData *)data withTimeout:(NSTimeInterval)timeout tag:(long)tag callback:(gcdAsyncSocketCallback_t)callback;
 
 /**
  * Returns progress of the current write, from 0.0 to 1.0, or NaN if no current write (use isnan() to check).
