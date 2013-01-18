@@ -5089,7 +5089,7 @@ enum GCDAsyncSocketConfig
 		
 		dispatch_async(delegateQueue, ^{ @autoreleasepool {
 			if(theRead->callback)
-				theRead->callback(result);
+				theRead->callback(result, NO);
 			
 			[theDelegate socket:self didReadData:result withTag:theRead->tag];
 		}});
@@ -5150,6 +5150,8 @@ enum GCDAsyncSocketConfig
 		GCDAsyncReadPacket *theRead = currentRead;
 		
 		dispatch_async(delegateQueue, ^{ @autoreleasepool {
+			if(theRead->callback)
+				theRead->callback(nil, YES);
 			
 			NSTimeInterval timeoutExtension = 0.0;
 			
@@ -5722,7 +5724,7 @@ enum GCDAsyncSocketConfig
 		
 		dispatch_async(delegateQueue, ^{ @autoreleasepool {
 			if(callback)
-				callback(nil);
+				callback(nil, NO);
 			[theDelegate socket:self didWriteDataWithTag:theWriteTag];
 		}});
 	}
@@ -5782,6 +5784,8 @@ enum GCDAsyncSocketConfig
 		GCDAsyncWritePacket *theWrite = currentWrite;
 		
 		dispatch_async(delegateQueue, ^{ @autoreleasepool {
+			if(theWrite->callback)
+				theWrite->callback(nil, YES);
 			
 			NSTimeInterval timeoutExtension = 0.0;
 			

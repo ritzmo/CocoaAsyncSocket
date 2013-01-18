@@ -59,7 +59,7 @@
 
 #endif
 
-typedef void (^gcdAsyncSocketCallback_t)(NSData *);
+typedef void (^gcdAsyncSocketCallback_t)(NSData *data, BOOL timeout);
 
 extern NSString *const GCDAsyncSocketException;
 extern NSString *const GCDAsyncSocketErrorDomain;
